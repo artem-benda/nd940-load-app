@@ -29,7 +29,6 @@ class LoadingButton @JvmOverloads constructor(
         strokeWidth = 2.0f
         context.withStyledAttributes(attrs, R.styleable.LoadingButton) {
             color = getColor(R.styleable.LoadingButton_textColor, 0)
-            strokeWidth = 2.0f
         }
         textAlign = Paint.Align.CENTER
         textSize = this@LoadingButton.textSize
@@ -41,12 +40,18 @@ class LoadingButton @JvmOverloads constructor(
         strokeWidth = 2.0f
         context.withStyledAttributes(attrs, R.styleable.LoadingButton) {
             color = getColor(R.styleable.LoadingButton_loadingIndicatorColor, 0)
-            strokeWidth = 2.0f
         }
         style = Paint.Style.FILL
     }
 
-    private var progressRect = Rect(null)
+    private val circlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        strokeWidth = 2.0f
+        color = Color.YELLOW
+        style = Paint.Style.FILL
+    }
+
+    private var buttonRect = Rect()
+    private var progressRect = Rect()
 
     private var fakeProgress = 0
         set(value) {
@@ -59,30 +64,11 @@ class LoadingButton @JvmOverloads constructor(
     private var textColor = 0
     private var loadingIndicatorColor = 0
 
-    private var buttonState: ButtonState by Delegates.observable<ButtonState>(ButtonState.Completed) { p, old, new ->
+    private var buttonState: ButtonState by Delegates.observable<ButtonState>(ButtonState.Completed) { _, _, new ->
         when (new) {
-            ButtonState.Clicked -> {
-                buttonState = ButtonState.Loading
-            }
-            ButtonState.Loading -> {
-                valueAnimator.apply {
-                    setObjectValues(0, widthSize - 1)
-                    duration = 3000L
-                    addListener(object : AnimatorListenerAdapter() {
-                        override fun onAnimationEnd(animation: Animator?) {
-                            super.onAnimationEnd(animation)
-                            buttonState = ButtonState.Completed
-                        }
-                    })
-                    addUpdateListener {
-                        fakeProgress = it.animatedValue as Int
-                    }
-                }.start()
-            }
-            ButtonState.Completed -> {
-                fakeProgress = 0
-                invalidate()
-            }
+            ButtonState.Clicked -> onButtonStateClicked()
+            ButtonState.Loading -> onButtonStateLoading()
+            ButtonState.Completed -> onButtonStateCompleted()
         }
     }
 
@@ -101,6 +87,7 @@ class LoadingButton @JvmOverloads constructor(
         valueAnimator.cancel()
         widthSize = w
         heightSize = h
+        buttonRect = Rect(0, 0, w, h)
     }
 
     override fun onDraw(canvas: Canvas?) {
@@ -109,15 +96,23 @@ class LoadingButton @JvmOverloads constructor(
         if (fakeProgress > 0) {
             canvas?.drawRect(progressRect, progressPaint)
         }
-        when (buttonState) {
-            ButtonState.Loading -> canvas?.drawText("Loading...", widthSize / 2.0f, (heightSize + textSize) / 2.0f, textPaint)
-            else -> canvas?.drawText("Download", widthSize / 2.0f, (heightSize + textSize) / 2.0f, textPaint)
+        val buttonText = when (buttonState) {
+            ButtonState.Loading -> resources.getString(R.string.button_loading)
+            else -> resources.getString(R.string.button_default)
+        }
+        canvas?.drawText(buttonText, widthSize / 2.0f, (heightSize + textSize) / 2.0f, textPaint)
+        if (fakeProgress > 0) {
+            val textWidth = textPaint.measureText(buttonText, 0, buttonText.length)
+            canvas?.save()
+            canvas?.translate((widthSize + textWidth + textSize) / 2.0f, (heightSize - textSize) / 2.0f)
+            canvas?.drawArc(0f, 0f, textSize, textSize, 0f, 360f * fakeProgress / widthSize, true, circlePaint)
+            canvas?.restore()
         }
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val minw: Int = paddingLeft + paddingRight + suggestedMinimumWidth
-        val w: Int = resolveSizeAndState(minw, widthMeasureSpec, 1)
+        val minW: Int = paddingLeft + paddingRight + suggestedMinimumWidth
+        val w: Int = resolveSizeAndState(minW, widthMeasureSpec, 1)
         val h: Int = resolveSizeAndState(
             MeasureSpec.getSize(w),
             heightMeasureSpec,
@@ -133,5 +128,30 @@ class LoadingButton @JvmOverloads constructor(
             buttonState = ButtonState.Clicked
         }
         return super.performClick()
+    }
+
+    private fun onButtonStateClicked() {
+        buttonState = ButtonState.Loading
+    }
+
+    private fun onButtonStateLoading() {
+        valueAnimator.apply {
+            setObjectValues(0, widthSize - 1)
+            duration = 3000L
+            addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator?) {
+                    super.onAnimationEnd(animation)
+                    buttonState = ButtonState.Completed
+                }
+            })
+            addUpdateListener {
+                fakeProgress = it.animatedValue as Int
+            }
+        }.start()
+    }
+
+    private fun onButtonStateCompleted() {
+        fakeProgress = 0
+        invalidate()
     }
 }

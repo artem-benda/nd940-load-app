@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
 import androidx.databinding.DataBindingUtil
@@ -30,7 +31,13 @@ class MainActivity : AppCompatActivity() {
         registerReceiver(receiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
 
         binding.contentMain.customButton.setOnClickListener {
-            download()
+            val selectedRepository = getSelectedGithubRepository(binding)
+
+            if (selectedRepository != null) {
+                download(selectedRepository.url)
+            } else {
+                Toast.makeText(this, R.string.select_download_option, Toast.LENGTH_LONG).show()
+            }
         }
     }
 
@@ -40,9 +47,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun download() {
+    private fun download(url: String) {
         val request =
-            DownloadManager.Request(Uri.parse(URL))
+            DownloadManager.Request(Uri.parse(url))
                 .setTitle(getString(R.string.app_name))
                 .setDescription(getString(R.string.app_description))
                 .setRequiresCharging(false)
@@ -54,9 +61,30 @@ class MainActivity : AppCompatActivity() {
             downloadManager.enqueue(request) // enqueue puts the download request in the queue.
     }
 
+    private fun getSelectedGithubRepository(binding: ActivityMainBinding): GithubRepository? {
+        var selectedRepository: GithubRepository? = null
+        when {
+            binding.contentMain.optionGlide.isChecked -> {
+                selectedRepository = GithubRepository.GLIDE
+            }
+            binding.contentMain.optionLoadApp.isChecked -> {
+                selectedRepository = GithubRepository.LOAD_APP
+            }
+            binding.contentMain.optionRetrofit.isChecked -> {
+                selectedRepository = GithubRepository.RETROFIT
+            }
+        }
+
+        return selectedRepository
+    }
+
+    private enum class GithubRepository(val url: String) {
+        GLIDE("https://github.com/bumptech/glide/archive/refs/heads/master.zip"),
+        LOAD_APP("https://github.com/udacity/nd940-c3-advanced-android-programming-project-starter/archive/master.zip"),
+        RETROFIT("https://github.com/square/retrofit/archive/refs/heads/master.zip");
+    }
+
     companion object {
-        private const val URL =
-            "https://github.com/udacity/nd940-c3-advanced-android-programming-project-starter/archive/master.zip"
         private const val CHANNEL_ID = "channelId"
     }
 }

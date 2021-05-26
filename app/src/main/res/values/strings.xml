@@ -19,4 +19,7 @@
     <string name="retrofit_option">Retrofit - Type-safe HTTP Client for Android and Java by Square, Inc</string>
     <string name="select_download_option">Please, select download option</string>
     <string name="button_default">Download</string>
+    <string name="download_successful">The file was downloaded successfully!</string>
+    <string name="download_failed">Failed to download file...</string>
+    <string name="downloaded">Download complete</string>
 </resources>

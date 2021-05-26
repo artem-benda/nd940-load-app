@@ -7,17 +7,21 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.databinding.DataBindingUtil
 import com.udacity.databinding.ActivityMainBinding
+import java.lang.IllegalStateException
 
 class MainActivity : AppCompatActivity() {
 
     private var downloadID: Long = 0
+    private var startedDownloadOption: GithubRepository? = null
 
     private lateinit var notificationManager: NotificationManager
     private lateinit var pendingIntent: PendingIntent
@@ -25,8 +29,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val binding: ActivityMainBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+        val binding: ActivityMainBinding =
+            DataBindingUtil.setContentView(this, R.layout.activity_main)
         setSupportActionBar(binding.toolbar)
+
+        NotificationManagerCompat.from(applicationContext)
+            .createChannel(applicationContext)
 
         registerReceiver(receiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
 
@@ -35,6 +43,7 @@ class MainActivity : AppCompatActivity() {
 
             if (selectedRepository != null) {
                 download(selectedRepository.url)
+                startedDownloadOption = selectedRepository
             } else {
                 Toast.makeText(this, R.string.select_download_option, Toast.LENGTH_LONG).show()
             }
@@ -44,6 +53,19 @@ class MainActivity : AppCompatActivity() {
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val id = intent?.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+            if (downloadID == id) {
+                val (isDownloadedSuccessfully, url) = getDownloadResult(downloadID)
+                val fileNameResId = GithubRepository.values().filter { it.url == url }.first().filenameResId
+                val textResource = if (isDownloadedSuccessfully) R.string.download_successful else R.string.download_failed
+                NotificationManagerCompat.from(applicationContext)
+                    .sendDownloadResult(
+                        applicationContext,
+                        resources.getString(R.string.downloaded),
+                        resources.getString(textResource),
+                        fileNameResId,
+                        isDownloadedSuccessfully
+                    )
+            }
         }
     }
 
@@ -78,13 +100,22 @@ class MainActivity : AppCompatActivity() {
         return selectedRepository
     }
 
-    private enum class GithubRepository(val url: String) {
-        GLIDE("https://github.com/bumptech/glide/archive/refs/heads/master.zip"),
-        LOAD_APP("https://github.com/udacity/nd940-c3-advanced-android-programming-project-starter/archive/master.zip"),
-        RETROFIT("https://github.com/square/retrofit/archive/refs/heads/master.zip");
+    private enum class GithubRepository(val filenameResId: Int, val url: String) {
+        GLIDE(R.string.glide_option, "https://github.com/bumptech/glide/archive/refs/heads/master.zip"),
+        LOAD_APP(R.string.load_app_option, "https://github.com/udacity/nd940-c3-advanced-android-programming-project-starter/archive/master.zip"),
+        RETROFIT(R.string.retrofit_option, "https://github.com/square/retrofit/archive/refs/heads/master.zip");
     }
 
-    companion object {
-        private const val CHANNEL_ID = "channelId"
+    private fun getDownloadResult(downloadId: Long): Pair<Boolean, String> {
+        val downloadManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+        val c: Cursor = downloadManager
+            .query(DownloadManager.Query().setFilterById(downloadId))
+        if (c.moveToFirst()) {
+            val status: Int = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS))
+            val isSuccessful = status == DownloadManager.STATUS_SUCCESSFUL
+            val url = c.getString(c.getColumnIndex(DownloadManager.COLUMN_URI))
+            return Pair(isSuccessful, url)
+        }
+        throw IllegalStateException()
     }
 }

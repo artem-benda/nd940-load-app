@@ -1,6 +1,5 @@
 package com.udacity
 
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -14,19 +13,24 @@ import androidx.core.app.NotificationManagerCompat
 private const val REQUEST_CODE = 1
 private const val FLAGS = 0
 private const val CHANNEL_ID = "com.udacity.load-app.common"
+private const val NOTIFICATION_ID = 1
 
-fun NotificationManagerCompat.send(
+fun NotificationManagerCompat.sendDownloadResult(
     applicationContext: Context,
     title: String,
-    message: String
-): Notification {
+    message: String,
+    filenameResId: Int,
+    isDownloadedSuccessfully: Boolean
+) {
     val intent = Intent(applicationContext, DetailActivity::class.java).apply {
         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        putExtra(DetailActivity.FILENAME_RES_ID, filenameResId)
+        putExtra(DetailActivity.DOWNLOAD_IS_SUCCESSFUL, isDownloadedSuccessfully)
     }
 
     val pendingIntent = PendingIntent.getActivity(applicationContext, REQUEST_CODE, intent, FLAGS)
 
-    return NotificationCompat.Builder(applicationContext, CHANNEL_ID)
+    val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
         .setStyle(NotificationCompat.BigPictureStyle())
         .setColorized(true)
         .setColor(Color.RED)
@@ -43,13 +47,15 @@ fun NotificationManagerCompat.send(
         .setCategory(NotificationCompat.CATEGORY_PROGRESS)
         .setAutoCancel(true)
         .build()
+
+    notify(NOTIFICATION_ID, notification)
 }
 
 fun NotificationManagerCompat.createChannel(applicationContext: Context) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         val name = applicationContext.getString(R.string.channel_name)
         val descriptionText = applicationContext.getString(R.string.channel_description)
-        val importance = NotificationManager.IMPORTANCE_DEFAULT
+        val importance = NotificationManager.IMPORTANCE_HIGH
         val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
             description = descriptionText
         }

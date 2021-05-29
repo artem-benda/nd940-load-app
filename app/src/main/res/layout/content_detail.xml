@@ -4,15 +4,68 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
-
+        <variable
+            name="model"
+            type="com.udacity.DownloadResultModel" />
     </data>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <androidx.constraintlayout.motion.widget.MotionLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         tools:context=".DetailActivity"
-        tools:showIn="@layout/activity_detail">
+        tools:showIn="@layout/activity_detail"
+        android:padding="16dp"
+        app:layoutDescription="@xml/content_detail_scene">
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        <LinearLayout
+            android:id="@+id/form_column"
+            android:orientation="vertical"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/file_name_label"
+                android:text="@string/file_name"
+                style="@style/form_field_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <TextView
+                android:id="@+id/file_name_value"
+                tools:text="@string/load_app_option"
+                android:text="@{model.fileName}"
+                style="@style/form_field_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <TextView
+                android:id="@+id/status_label"
+                android:text="@string/download_state"
+                style="@style/form_field_label"
+                android:layout_marginTop="16dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+            <TextView
+                android:id="@+id/status_value"
+                tools:text="@string/download_failed"
+                app:setDownloadStateText="@{model}"
+                style="@style/form_field_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/ok_button"
+            android:text="@string/ok"
+            app:layout_constraintVertical_bias="1"
+            app:layout_constraintTop_toBottomOf="@+id/form_row"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content" />
+
+    </androidx.constraintlayout.motion.widget.MotionLayout>
 </layout>

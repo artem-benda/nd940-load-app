@@ -19,19 +19,17 @@ fun NotificationManagerCompat.sendDownloadResult(
     applicationContext: Context,
     title: String,
     message: String,
-    filenameResId: Int,
-    isDownloadedSuccessfully: Boolean
+    downloadResultModel: DownloadResultModel
 ) {
     val intent = Intent(applicationContext, DetailActivity::class.java).apply {
         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        putExtra(DetailActivity.FILENAME_RES_ID, filenameResId)
-        putExtra(DetailActivity.DOWNLOAD_IS_SUCCESSFUL, isDownloadedSuccessfully)
+        putExtra(DetailActivity.DOWNLOAD_RESULT, downloadResultModel)
     }
 
     val pendingIntent = PendingIntent.getActivity(applicationContext, REQUEST_CODE, intent, FLAGS)
 
     val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
-        .setStyle(NotificationCompat.BigPictureStyle())
+        .setStyle(NotificationCompat.BigTextStyle())
         .setColorized(true)
         .setColor(Color.RED)
         .setPriority(NotificationCompat.PRIORITY_HIGH)

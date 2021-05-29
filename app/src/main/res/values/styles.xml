@@ -17,4 +17,13 @@
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
+    <style name="form_field_label">
+        <item name="android:textSize">18sp</item>
+    </style>
+
+    <style name="form_field_value">
+        <item name="android:textSize">18sp</item>
+        <item name="textColor">@color/black</item>
+    </style>
+
 </resources>

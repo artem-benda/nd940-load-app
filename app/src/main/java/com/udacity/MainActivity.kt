@@ -54,16 +54,17 @@ class MainActivity : AppCompatActivity() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val id = intent?.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
             if (downloadID == id) {
-                val (isDownloadedSuccessfully, url) = getDownloadResult(downloadID)
-                val fileNameResId = GithubRepository.values().filter { it.url == url }.first().filenameResId
-                val textResource = if (isDownloadedSuccessfully) R.string.download_successful else R.string.download_failed
+                val downloadResultModel = getDownloadResult(downloadID)
+                val textResource = if (downloadResultModel.downloadState == DownloadState.SUCCESS)
+                    R.string.download_successful
+                else
+                    R.string.download_failed
                 NotificationManagerCompat.from(applicationContext)
                     .sendDownloadResult(
                         applicationContext,
                         resources.getString(R.string.downloaded),
                         resources.getString(textResource),
-                        fileNameResId,
-                        isDownloadedSuccessfully
+                        downloadResultModel
                     )
             }
         }
@@ -106,7 +107,7 @@ class MainActivity : AppCompatActivity() {
         RETROFIT(R.string.retrofit_option, "https://github.com/square/retrofit/archive/refs/heads/master.zip");
     }
 
-    private fun getDownloadResult(downloadId: Long): Pair<Boolean, String> {
+    private fun getDownloadResult(downloadId: Long): DownloadResultModel {
         val downloadManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
         val c: Cursor = downloadManager
             .query(DownloadManager.Query().setFilterById(downloadId))
@@ -114,7 +115,10 @@ class MainActivity : AppCompatActivity() {
             val status: Int = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS))
             val isSuccessful = status == DownloadManager.STATUS_SUCCESSFUL
             val url = c.getString(c.getColumnIndex(DownloadManager.COLUMN_URI))
-            return Pair(isSuccessful, url)
+            val fileNameResId = GithubRepository.values().first { it.url == url }.filenameResId
+            val fileName = resources.getString(fileNameResId)
+            val downloadState = if (isSuccessful) DownloadState.SUCCESS else DownloadState.FAILURE
+            return DownloadResultModel(fileName, downloadState)
         }
         throw IllegalStateException()
     }

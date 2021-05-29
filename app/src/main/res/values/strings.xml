@@ -22,4 +22,9 @@
     <string name="download_successful">The file was downloaded successfully!</string>
     <string name="download_failed">Failed to download file...</string>
     <string name="downloaded">Download complete</string>
+    <string name="file_name">File name:</string>
+    <string name="download_state">Status</string>
+    <string name="state_success">Success</string>
+    <string name="state_failure">Failure</string>
+    <string name="ok">OK</string>
 </resources>

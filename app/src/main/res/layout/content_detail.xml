@@ -59,7 +59,7 @@
             android:id="@+id/ok_button"
             android:text="@string/ok"
             app:layout_constraintVertical_bias="1"
-            app:layout_constraintTop_toBottomOf="@+id/form_row"
+            app:layout_constraintTop_toBottomOf="@+id/form_column"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
